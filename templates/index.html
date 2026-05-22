@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Cab Fare Prediction</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <style>
+        body {
+            font-family: Poppins;
+            background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+            color: white;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        #map {
+            height: 300px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 8px;
+            border: none;
+        }
+
+        button {
+            background: #00c6ff;
+            color: white;
+            font-weight: bold;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🚖 Cab Fare Prediction</h1>
+
+    <div id="map"></div>
+
+    <div class="card">
+
+        <form action="/predict" method="post">
+
+            <input type="number" name="passenger_count" placeholder="Passenger Count">
+            <input type="number" name="hour" placeholder="Hour">
+            <input type="number" name="day" placeholder="Day">
+            <input type="number" name="month" placeholder="Month">
+            <input type="number" step="any" name="distance_km" id="distance" placeholder="Distance">
+
+            <button type="submit">Predict Fare</button>
+
+        </form>
+
+        {% if prediction_text %}
+        <div>
+            {{ prediction_text | safe }}
+        </div>
+        {% endif %}
+
+    </div>
+
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+let map = L.map('map').setView([28.6139, 77.2090], 12);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+let pickup, drop;
+
+map.on('click', function(e){
+
+    if(!pickup){
+        pickup = e.latlng;
+        L.marker(pickup).addTo(map).bindPopup("Pickup").openPopup();
+    } else {
+        drop = e.latlng;
+        L.marker(drop).addTo(map).bindPopup("Drop").openPopup();
+
+        let R = 6371;
+        let dLat = (drop.lat - pickup.lat) * Math.PI/180;
+        let dLon = (drop.lng - pickup.lng) * Math.PI/180;
+
+        let a = Math.sin(dLat/2)**2 +
+                Math.cos(pickup.lat*Math.PI/180) *
+                Math.cos(drop.lat*Math.PI/180) *
+                Math.sin(dLon/2)**2;
+
+        let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+        let dist = R * c;
+
+        document.getElementById("distance").value = dist.toFixed(2);
+    }
+});
+</script>
+
+</body>
+</html>
