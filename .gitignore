@@ -1,5 +1,5 @@
 model.pkl
+data/
 __pycache__/
-.env/
-env/
-model.pkl
+*.pyc
+venv/
