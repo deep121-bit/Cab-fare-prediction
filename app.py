@@ -4,6 +4,7 @@ import pickle
 
 app = Flask(__name__)
 
+# Load trained model
 model = pickle.load(open("model.pkl", "rb"))
 
 
@@ -15,30 +16,43 @@ def home():
 @app.route("/predict", methods=["POST"])
 def predict():
 
-    passenger_count = int(request.form["passenger_count"])
-    hour = int(request.form["hour"])
-    day = int(request.form["day"])
-    month = int(request.form["month"])
-    distance_km = float(request.form["distance_km"])
+    try:
+        # Get form data
+        passenger_count = int(request.form.get("passenger_count"))
+        hour = int(request.form.get("hour"))
+        day = int(request.form.get("day"))
+        month = int(request.form.get("month"))
+        distance_km = float(request.form.get("distance_km"))
 
-    features = np.array([[passenger_count, hour, day, month, distance_km]])
+        # Create feature array
+        features = np.array([[passenger_count, hour, day, month, distance_km]])
 
-    prediction = model.predict(features)[0]
+        # 🔥 DEBUG (check values)
+        print("INPUT FEATURES:", features)
 
-    usd = round(prediction, 2)
+        # Predict
+        prediction = model.predict(features)[0]
 
-    inr = round(usd * 83, 2)
-    eur = round(usd * 0.92, 2)
-    gbp = round(usd * 0.79, 2)
+        # 🔥 DEBUG (check output)
+        print("PREDICTION:", prediction)
 
-    result = f"""
-    💵 USD: ${usd} <br>
-    🇮🇳 INR: ₹{inr} <br>
-    🇪🇺 EUR: €{eur} <br>
-    🇬🇧 GBP: £{gbp}
-    """
+        # Currency conversion
+        usd = round(prediction, 2)
+        inr = round(usd * 83, 2)
+        eur = round(usd * 0.92, 2)
+        gbp = round(usd * 0.79, 2)
 
-    return render_template("index.html", prediction_text=result)
+        result = f"""
+        💵 USD: ${usd} <br>
+        🇮🇳 INR: ₹{inr} <br>
+        🇪🇺 EUR: €{eur} <br>
+        🇬🇧 GBP: £{gbp}
+        """
+
+        return render_template("index.html", prediction_text=result)
+
+    except Exception as e:
+        return render_template("index.html", prediction_text=f"❌ Error: {str(e)}")
 
 
 if __name__ == "__main__":
